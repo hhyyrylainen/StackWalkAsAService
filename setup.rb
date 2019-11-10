@@ -25,9 +25,9 @@ require 'fileutils'
 require_relative 'RubySetupSystem/RubyCommon.rb'
 
 def checkRunFolder(suggested)
-  docker_file = File.join(suggested, 'Dockerfile')
+  random_file = File.join(suggested, 'setup.rb')
 
-  onError('Not ran from base directory!') unless File.exist?(docker_file)
+  onError('Not ran from base directory!') unless File.exist?(random_file)
 
   thirdPartyFolder = File.join suggested, 'ThirdParty'
 

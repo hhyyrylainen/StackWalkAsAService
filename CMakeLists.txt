@@ -32,6 +32,12 @@ add_definitions(-DBOOST_PROGRAM_OPTIONS_DYN_LINK=1)
 link_directories(build/ThirdParty/lib)
 include_directories(build/ThirdParty/include)
 
+# Copy stackwalk to the build folder and also install it
+set(STACK_WALK_EXECUTABLE build/ThirdParty/bin/minidump_stackwalk)
+
+file(COPY ${STACK_WALK_EXECUTABLE} DESTINATION "${CMAKE_BINARY_DIR}/src")
+install(PROGRAMS ${STACK_WALK_EXECUTABLE} DESTINATION bin)
+
 
 add_subdirectory(src)
 # add_subdirectory(test)
