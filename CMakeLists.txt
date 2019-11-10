@@ -28,6 +28,10 @@ include_directories(${Boost_INCLUDE_DIR})
 add_definitions(-DBOOST_ALL_NO_LIB)
 add_definitions(-DBOOST_PROGRAM_OPTIONS_DYN_LINK=1)
 
+# RubySetupSystem installed things
+link_directories(build/ThirdParty/lib)
+include_directories(build/ThirdParty/include)
+
 
 add_subdirectory(src)
 # add_subdirectory(test)

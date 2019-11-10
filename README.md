@@ -45,7 +45,7 @@ Rough steps:
 
 ```sh
 gem install os colorize rubyzip json sha3
-./Setup.rb
+./setup.rb
 
 ```
 
