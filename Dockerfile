@@ -1,4 +1,4 @@
-FROM hhyyrylainen/stackwalk-deps:v1 as builder
+FROM hhyyrylainen/stackwalk-deps:v1 AS builder
 
 RUN git clone https://github.com/hhyyrylainen/StackWalkAsAService.git ~/StackWalk && cd ~/StackWalk && git submodule init
 
