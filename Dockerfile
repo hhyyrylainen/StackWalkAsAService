@@ -1,9 +1,17 @@
-FROM fedora:30 as builder
+FROM hhyyrylainen/stackwalk-deps:v1 as builder
 
-RUN dnf install -y --setopt=deltarpm=false ruby ruby-devel xcb-util-image-devel systemd-devel libjpeg-devel libvorbis-devel flac-devel openal-soft-devel mesa-libGL-devel libXcomposite libXtst libXScrnSaver atk at-spi2-core-devel at-spi2-atk-devel alsa-lib autoconf automake bzip2 cmake freetype-devel gcc gcc-c++ git libtool make mercurial nasm pkgconfig zlib-devel yasm vulkan-headers vulkan-loader vulkan-loader-devel vulkan-tools vulkan-validation-layers libuuid-devel libX11-devel libXcursor-devel libXrandr-devel libXi-devel mesa-libGLU-devel boost-devel SDL2-devel ImageMagick libXfixes-devel subversion doxygen libXmu-devel git-lfs redhat-lsb-core svn p7zip gcc make redhat-rpm-config fedora-repos-rawhide clang && dnf clean all
+RUN git clone https://github.com/hhyyrylainen/StackWalkAsAService.git ~/StackWalk && cd ~/StackWalk && git submodule init
 
-# RUN git lfs install
+RUN cd ~/StackWalk && ./setup.rb --no-packagemanager
 
-RUN gem install os colorize rubyzip json sha3
+RUN cd ~/StackWalk/build && make install
 
+FROM fedora:30
+
+RUN dnf install -y --setopt=deltarpm=false libjpeg zlib boost GraphicsMagick fcgi glew libharu zlib sqlite libpq pango libunwind openssl libpng && dnf clean all
+
+# WORKDIR /stackwalk/
+COPY --from=builder /usr/local/bin/stackwalkwebapp /usr/local/bin/
+COPY --from=builder ~/StackWalk/build/ThirdParty/bin/minidump_stackwalk /usr/local/bin/
+CMD ["/usr/local/bin/stackwalkwebapp"]
 
