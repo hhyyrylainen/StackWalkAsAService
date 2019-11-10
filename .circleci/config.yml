@@ -13,7 +13,7 @@ jobs:
        - restore_cache:
            keys:
              - v1-build-{{ arch }}-{{ .Branch }}
-       - run: ./Setup.rb --no-packagemanager --no-updates -j 5
+       - run: ./setup.rb --no-packagemanager --no-updates -j 5
        - save_cache:
            key: v1-deps-{{ arch }}-{{ checksum "setup.rb" }}-{{ checksum "stack_walk_dependencies.rb" }}
            paths:
