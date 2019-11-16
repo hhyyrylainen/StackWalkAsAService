@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.10)
 
 project(StackWalkAsAService)
 
+include(GNUInstallDirs)
+
 # Common options
 if(CMAKE_BUILD_TYPE STREQUAL "")
   set(CMAKE_BUILD_TYPE RelWithDebInfo CACHE STRING
@@ -35,8 +37,33 @@ include_directories(build/ThirdParty/include)
 # Copy stackwalk to the build folder and also install it
 set(STACK_WALK_EXECUTABLE build/ThirdParty/bin/minidump_stackwalk)
 
+# Wt libs (static linking is used on windows)
+if(UNIX)
+  file(GLOB WT_LIBRARIES build/ThirdParty/lib/lib/libwt*.so*)
+
+  install(FILES ${WT_LIBRARIES} DESTINATION ${CMAKE_INSTALL_LIBDIR})
+endif()
+
+set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_RPATH}:${CMAKE_INSTALL_LIBDIR}")
+
+# Core Wt resources
+set(WT_RESOURCES_FOLDER build/ThirdParty/share/Wt/resources)
+set(WT_CONFIG_FOLDER build/ThirdParty/etc/wt)
+
+
 file(COPY ${STACK_WALK_EXECUTABLE} DESTINATION "${CMAKE_BINARY_DIR}/src")
-install(PROGRAMS ${STACK_WALK_EXECUTABLE} DESTINATION bin)
+install(PROGRAMS ${STACK_WALK_EXECUTABLE} DESTINATION ${CMAKE_INSTALL_BINDIR})
+
+
+file(COPY ${WT_RESOURCES_FOLDER} DESTINATION "${CMAKE_BINARY_DIR}/src")
+install(DIRECTORY ${WT_RESOURCES_FOLDER} DESTINATION
+  ${CMAKE_INSTALL_LOCALSTATEDIR}/StackWalkAsAService/http)
+
+file(COPY ${WT_CONFIG_FOLDER} DESTINATION "${CMAKE_BINARY_DIR}/src")
+install(DIRECTORY ${WT_CONFIG_FOLDER} DESTINATION
+  ${CMAKE_INSTALL_SYSCONFDIR})
+
+
 
 
 add_subdirectory(src)

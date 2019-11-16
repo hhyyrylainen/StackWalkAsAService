@@ -1,3 +1,5 @@
+require 'os'
+
 require_relative 'RubySetupSystem/Libraries/SetupWt.rb'
 require_relative 'RubySetupSystem/Libraries/SetupBreakpad.rb'
 
@@ -15,7 +17,7 @@ THIRD_PARTY_INSTALL = File.join(ProjectDir, 'build', 'ThirdParty')
   installPath: THIRD_PARTY_INSTALL,
   noInstallSudo: true,
   noExamples: true,
-  shared: false,
+  shared: OS.windows? ? false : true,
   noQt: true
 )
 
