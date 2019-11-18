@@ -19,9 +19,15 @@ endif()
 # target_include_directories(stackwalkcommon PUBLIC ${CMAKE_CURRENT_LIST_DIR})
 
 
-add_executable(stackwalkwebapp main.cpp)
+add_executable(stackwalkwebapp
+  Application.h Application.cpp
+  StackWalkRunner.h StackWalkRunner.cpp
+  ResultWidget.h ResultWidget.cpp
+  StackWalkOperation.h StackWalkOperation.cpp
+  main.cpp)
 
-target_link_libraries(stackwalkwebapp PRIVATE wt wthttp ${Boost_LIBRARIES})
+target_link_libraries(stackwalkwebapp PRIVATE wt wthttp ${Boost_LIBRARIES}
+  ${CMAKE_THREAD_LIBS_INIT})
 
 target_include_directories(stackwalkwebapp PUBLIC ${CMAKE_CURRENT_LIST_DIR})
 

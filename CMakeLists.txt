@@ -10,6 +10,8 @@ if(CMAKE_BUILD_TYPE STREQUAL "")
     "Set the build type, usually Release or RelWithDebInfo" FORCE)
 endif(CMAKE_BUILD_TYPE STREQUAL "")
 
+find_package(Threads)
+
 # Boost
 set(NEEDED_BOOST_COMPONENTS program_options system filesystem)
 
@@ -48,7 +50,7 @@ set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_RPATH}:${CMAKE_INSTALL_LIBDIR}")
 
 # Core Wt resources
 set(WT_RESOURCES_FOLDER build/ThirdParty/share/Wt/resources)
-set(WT_CONFIG_FOLDER build/ThirdParty/etc/wt)
+set(WT_CONFIG_FILE config/wt_config.xml)
 
 
 file(COPY ${STACK_WALK_EXECUTABLE} DESTINATION "${CMAKE_BINARY_DIR}/src")
@@ -59,9 +61,8 @@ file(COPY ${WT_RESOURCES_FOLDER} DESTINATION "${CMAKE_BINARY_DIR}/src")
 install(DIRECTORY ${WT_RESOURCES_FOLDER} DESTINATION
   ${CMAKE_INSTALL_LOCALSTATEDIR}/StackWalkAsAService/http)
 
-file(COPY ${WT_CONFIG_FOLDER} DESTINATION "${CMAKE_BINARY_DIR}/src")
-install(DIRECTORY ${WT_CONFIG_FOLDER} DESTINATION
-  ${CMAKE_INSTALL_SYSCONFDIR})
+install(FILES ${WT_CONFIG_FILE} DESTINATION
+  ${CMAKE_INSTALL_SYSCONFDIR}/StackWalkAsAService/)
 
 
 
