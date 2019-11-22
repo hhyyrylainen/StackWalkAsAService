@@ -58,6 +58,14 @@ ResultWidget::ResultWidget(const std::shared_ptr<StackWalkOperation>& operation)
     operation->SetOnStartedCallback(updateCallback);
     operation->SetOnFinishedCallback(updateCallback);
 }
+
+ResultWidget::~ResultWidget()
+{
+    if(Operation) {
+        Operation->SetOnStartedCallback(nullptr);
+        Operation->SetOnFinishedCallback(nullptr);
+    }
+}
 // ------------------------------------ //
 void ResultWidget::UpdateFromOperation()
 {

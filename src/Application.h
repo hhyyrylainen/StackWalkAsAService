@@ -16,8 +16,11 @@ class Application : public Wt::WApplication {
 public:
     Application(const Wt::WEnvironment& env, const std::shared_ptr<StackWalkRunner>& runner);
 
+    void finalize() override;
 
     void UpdateResultWidget(ResultWidget* widget);
+
+
 
 private:
     // Wt::WLineEdit* nameEdit_;

@@ -1,8 +1,8 @@
 #pragma once
 
 #include <Wt/WContainerWidget.h>
-#include <Wt/WText.h>
 #include <Wt/WPanel.h>
+#include <Wt/WText.h>
 
 namespace sws {
 
@@ -12,18 +12,19 @@ class StackWalkOperation;
 //! stackwalking
 class ResultWidget : public Wt::WContainerWidget {
 public:
-    ResultWidget(
-        const std::shared_ptr<StackWalkOperation>& operation);
+    ResultWidget(const std::shared_ptr<StackWalkOperation>& operation);
+
+    ~ResultWidget();
 
     void UpdateFromOperation();
-    
+
 private:
     Wt::WText* FileName;
     Wt::WText* StatusText;
     Wt::WText* SuccessText;
-    
+
     Wt::WPanel* ResultPanel;
-    
+
     Wt::WText* ResultText;
 
     std::shared_ptr<StackWalkOperation> Operation;

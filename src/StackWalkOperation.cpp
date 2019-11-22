@@ -15,28 +15,26 @@ StackWalkOperation::StackWalkOperation(const std::string& file) : FilePath(file)
 
 StackWalkOperation::~StackWalkOperation()
 {
-    std::unique_lock<std::mutex> lock(Mutex);
-    EnsureFileIsDeleted();
+    std::unique_lock<std::recursive_mutex> lock(Mutex);
+    EnsureFileIsDeleted(lock);
 }
 // ------------------------------------ //
 void StackWalkOperation::OnStackWalkFinished(bool success, const std::string& result)
 {
-    {
-        std::unique_lock<std::mutex> lock(Mutex);
+    std::unique_lock<std::recursive_mutex> lock(Mutex);
 
-        Finished = true;
-        Success = success;
-        Result = result;
+    Finished = true;
+    Success = success;
+    Result = result;
 
-        EnsureFileIsDeleted();
-    }
+    EnsureFileIsDeleted(lock);
 
     if(OnFinishedCallback)
         OnFinishedCallback(*this);
 }
 
 // ------------------------------------ //
-void StackWalkOperation::EnsureFileIsDeleted()
+void StackWalkOperation::EnsureFileIsDeleted(std::unique_lock<std::recursive_mutex>& guard)
 {
     if(!FileDeleted) {
         try {

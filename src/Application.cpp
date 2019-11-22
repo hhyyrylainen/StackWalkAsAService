@@ -118,6 +118,8 @@ Application::Application(
     submit->clicked().connect([this] { Upload->upload(); });
 }
 // ------------------------------------ //
+void Application::finalize() {}
+// ------------------------------------ //
 void Application::UpdateResultWidget(ResultWidget* widget)
 {
     for(auto* created : CreatedOperations) {

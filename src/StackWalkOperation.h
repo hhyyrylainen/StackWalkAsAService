@@ -25,12 +25,14 @@ public:
     //! \note Changing the callbacks after queueing this operation is not safe
     void SetOnStartedCallback(std::function<void(StackWalkOperation& operation)> callback)
     {
+        std::unique_lock<std::recursive_mutex> lock(Mutex);
         OnStartedCallback = callback;
     }
 
     //! \copydoc SetOnStartedCallback
     void SetOnFinishedCallback(std::function<void(StackWalkOperation& operation)> callback)
     {
+        std::unique_lock<std::recursive_mutex> lock(Mutex);
         OnFinishedCallback = callback;
     }
 
@@ -51,7 +53,8 @@ public:
 
     const std::string GetResult() const
     {
-        std::unique_lock<std::mutex> lock(Mutex);
+        std::unique_lock<std::recursive_mutex> lock(Mutex);
+
         if(!Finished)
             return "pending";
 
@@ -68,6 +71,8 @@ protected:
 
     void MarkStarted()
     {
+        std::unique_lock<std::recursive_mutex> lock(Mutex);
+
         Started = true;
 
         if(OnStartedCallback)
@@ -76,11 +81,11 @@ protected:
 
 private:
     //! \note Mutex must be locked before this
-    void EnsureFileIsDeleted();
+    void EnsureFileIsDeleted(std::unique_lock<std::recursive_mutex>& guard);
 
 private:
     //! For thread safe result updating and file deleting
-    mutable std::mutex Mutex;
+    mutable std::recursive_mutex Mutex;
 
     std::atomic<bool> Started{false};
     std::atomic<bool> Finished{false};
