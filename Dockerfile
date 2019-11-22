@@ -6,6 +6,7 @@ RUN mkdir /StackWalk
 COPY setup.rb stack_walk_dependencies.rb CMakeLists.txt /StackWalk/
 COPY .git /StackWalk/.git
 COPY src /StackWalk/src
+COPY config /StackWalk/config
 COPY RubySetupSystem /StackWalk/RubySetupSystem
 
 
