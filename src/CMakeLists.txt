@@ -24,6 +24,7 @@ add_executable(stackwalkwebapp
   StackWalkRunner.h StackWalkRunner.cpp
   ResultWidget.h ResultWidget.cpp
   StackWalkOperation.h StackWalkOperation.cpp
+  APIV1.h APIV1.cpp
   main.cpp)
 
 target_link_libraries(stackwalkwebapp PRIVATE wt wthttp ${Boost_LIBRARIES}

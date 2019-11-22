@@ -108,7 +108,10 @@ StackWalkRunner::~StackWalkRunner()
 {
     Stop();
 
-    // TODO: set failure status on any tasks in Queue
+    // Set failure status on any tasks in Queue
+    for(auto op : Queue) {
+        op->OnStackWalkFinished(false, "cancelled");
+    }
 }
 // ------------------------------------ //
 std::string StackWalkRunner::RunStackWalkHelp() const
@@ -177,6 +180,7 @@ void StackWalkRunner::CancelOperation(StackWalkOperation const* operation)
     for(auto iter = Queue.begin(); iter != Queue.end(); ++iter) {
         if(iter->get() == operation) {
 
+            (*iter)->OnStackWalkFinished(false, "cancelled");
             Queue.erase(iter);
             return;
         }
