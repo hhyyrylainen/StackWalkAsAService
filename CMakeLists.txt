@@ -41,7 +41,7 @@ set(STACK_WALK_EXECUTABLE build/ThirdParty/bin/minidump_stackwalk)
 
 # Wt libs (static linking is used on windows)
 if(UNIX)
-  file(GLOB WT_LIBRARIES build/ThirdParty/lib/lib/libwt*.so*)
+  file(GLOB WT_LIBRARIES build/ThirdParty/lib/libwt*.so*)
 
   install(FILES ${WT_LIBRARIES} DESTINATION ${CMAKE_INSTALL_LIBDIR})
 endif()
