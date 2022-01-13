@@ -15,8 +15,12 @@ Available from docker hub with `docker pull hhyyrylainen/stackwalk:latest`
 
 Running:
 ```sh
-docker run -itd -p 9090:9090 -v $(pwd)/build/src/Symbols:/Symbols:ro --restart always --name stackwalkweb hhyyrylainen/stackwalk:latest --http-port 9090
+docker run -itd -p 127.0.0.1:9090:9090 -v $(pwd)/build/src/Symbols:/Symbols:ro --restart always --name stackwalkweb hhyyrylainen/stackwalk:latest --http-port 9090
 ```
+
+The three part port syntax is ensured so that the container is listening only
+for local connections. It's not safe to expose this service to the internet
+directly so this is a recommended safety precaution.
 
 Before you run the command adjust the path for the mounted symbol
 folder (the host path is the first path listed in the `-v` option), as
@@ -28,7 +32,35 @@ and automatically restarting when needed. You can use `docker ps` to
 see the running container's name in order to stop it, for example when
 upgrading the service version.
 
+### Podman
 
+Alternatively the container can be run with `podman` with a command 
+similar to this:
+```sh
+podman run -d --rm -p 127.0.0.1:9090:9090 --mount type=bind,src=$(pwd)/build/src/Symbols,destination=/Symbols,ro=true,relabel=shared --name stackwalkweb hhyyrylainen/stackwalk:latest --http-port 9090
+```
+
+Note that to make it persistent you need to create a systemd service 
+(separate account rather than running as root is recommended):
+```sh
+useradd stackwalk -s /sbin/nologin
+podman generate systemd --new --name stackwalkweb > /etc/systemd/system/stackwalkweb.service
+# Edit to run as our stackwalk user
+# Add `User=stackwalk` to the service section and replace `%t/` with `/home/stackwalk/`
+emacs /etc/systemd/system/stackwalkweb.service
+podman stop stackwalkweb
+systemctl daemon-reload
+# You need to run the container at least once as the user you specified in the service file
+# the service failing to start is not a problem as long as the container managed to start correctly
+su - stackwalk -s /usr/bin/bash
+podman run --rm --name stackwalkweb hhyyrylainen/stackwalk:latest
+exit
+systemctl enable --now stackwalkweb
+systemctl status stackwalkweb
+```
+
+More info about that can be found elsewhere, for example:
+https://www.tutorialworks.com/podman-systemd/
 
 API
 ---
