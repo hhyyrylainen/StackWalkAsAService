@@ -58,6 +58,7 @@ void APIV1::handleRequest(const Wt::Http::Request& request, Wt::Http::Response& 
         }
     }
 
+    response.setStatus(200);
     response.setContentLength(result.length());
     response.out() << result;
 }
