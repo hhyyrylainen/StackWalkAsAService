@@ -16,14 +16,19 @@ using namespace sws;
 // ------------------------------------ //
 #ifdef _WIN32
 #define STACKWALK_EXECUTABLE_NAME "minidump_stackwalk.exe"
+#define STACKWALK_MINGW_NAME "minidump_stackwalk_mingw.exe"
 #else
 #define STACKWALK_EXECUTABLE_NAME "minidump_stackwalk"
+#define STACKWALK_MINGW_NAME "minidump_stackwalk_mingw"
 #endif //_WIN32
 
 constexpr auto EXPECTED_STACKWALK_HELP_CONTAINS = "a stack trace for the provided";
 
 constexpr auto SYSTEMWIDE_INSTALL1 = "/usr/bin/" STACKWALK_EXECUTABLE_NAME;
 constexpr auto SYSTEMWIDE_INSTALL2 = "/usr/local/bin/" STACKWALK_EXECUTABLE_NAME;
+
+constexpr auto SYSTEMWIDE_INSTALL1_MINGW = "/usr/bin/" STACKWALK_MINGW_NAME;
+constexpr auto SYSTEMWIDE_INSTALL2_MINGW = "/usr/local/bin/" STACKWALK_MINGW_NAME;
 
 // TODO: allow configuring from the command line or config file
 constexpr auto STANDARD_SYMBOL_LOCATIONS = {"/Symbols", "/symbols"};
@@ -35,11 +40,10 @@ StackWalkRunner::StackWalkRunner(
     const std::string_view& executablePath, int threadCount /*= 1*/)
 {
     if(threadCount != 1) {
-        throw std::runtime_error("other threadcount than 1 is not implemented");
+        throw std::runtime_error("other threadCount than 1 is not implemented");
     }
 
     // Try to find where the stackwalk executable is
-
     if(const auto exeRelative =
             std::filesystem::path(executablePath).parent_path() / STACKWALK_EXECUTABLE_NAME;
         std::filesystem::exists(exeRelative)) {
@@ -61,21 +65,61 @@ StackWalkRunner::StackWalkRunner(
         StackWalkExecutable = SYSTEMWIDE_INSTALL2;
     }
 
+    // Find the MinGW stackwalk variant
+    if(const auto exeRelative =
+            std::filesystem::path(executablePath).parent_path() / STACKWALK_MINGW_NAME;
+        std::filesystem::exists(exeRelative)) {
+
+        MinGWStackWalkExecutable = exeRelative.string();
+
+    } else if(const auto workDirRelative =
+                  std::filesystem::current_path() / STACKWALK_MINGW_NAME;
+              std::filesystem::exists(workDirRelative)) {
+
+        MinGWStackWalkExecutable = workDirRelative.string();
+
+    } else if(std::filesystem::exists(SYSTEMWIDE_INSTALL1_MINGW)) {
+
+        MinGWStackWalkExecutable = SYSTEMWIDE_INSTALL1_MINGW;
+
+    } else if(std::filesystem::exists(SYSTEMWIDE_INSTALL2_MINGW)) {
+
+        MinGWStackWalkExecutable = SYSTEMWIDE_INSTALL2_MINGW;
+    }
+
+
     // Check that the detected path is valid
     if(StackWalkExecutable.empty() || !std::filesystem::exists(StackWalkExecutable)) {
         throw std::runtime_error("could not find '" STACKWALK_EXECUTABLE_NAME
                                  "' in any of the predefined locations");
     }
 
+    if(MinGWStackWalkExecutable.empty() ||
+        !std::filesystem::exists(MinGWStackWalkExecutable)) {
+        throw std::runtime_error(
+            "could not find '" STACKWALK_MINGW_NAME
+            "' in any of the predefined locations (normal stackwalk was found)");
+    }
+
     StackWalkExecutable = std::filesystem::canonical(StackWalkExecutable).string();
+    MinGWStackWalkExecutable = std::filesystem::canonical(MinGWStackWalkExecutable).string();
 
     // Check that the executable runs and returns sensible output
-    if(const auto output = RunStackWalkHelp();
+    if(const auto output = RunStackWalkHelp(StackWalkType::Normal);
         output.find(EXPECTED_STACKWALK_HELP_CONTAINS) == std::string::npos) {
 
         std::cout << "Stackwalk output: " << output << "\n";
 
         throw std::runtime_error("running stackwalk with '-h' flag printed unexpected output");
+    }
+
+    if(const auto output = RunStackWalkHelp(StackWalkType::MinGW);
+        output.find(EXPECTED_STACKWALK_HELP_CONTAINS) == std::string::npos) {
+
+        std::cout << "MinGW Stackwalk output: " << output << "\n";
+
+        throw std::runtime_error(
+            "running mingw stackwalk with '-h' flag printed unexpected output");
     }
 
     // Detect symbols folder
@@ -99,6 +143,7 @@ StackWalkRunner::StackWalkRunner(
     }
 
     Wt::log("info") << "Detected stackwalk path: " << StackWalkExecutable
+                    << ", mingw: " << MinGWStackWalkExecutable
                     << ", symbols path: " << SymbolsFolder;
 
     Start();
@@ -109,17 +154,17 @@ StackWalkRunner::~StackWalkRunner()
     Stop();
 
     // Set failure status on any tasks in Queue
-    for(auto op : Queue) {
+    for(const auto& op : Queue) {
         op->OnStackWalkFinished(false, "cancelled");
     }
 }
 // ------------------------------------ //
-std::string StackWalkRunner::RunStackWalkHelp() const
+std::string StackWalkRunner::RunStackWalkHelp(StackWalkType type) const
 {
     boost::asio::io_service ios;
     std::future<std::string> output;
 
-    bp::child c(StackWalkExecutable, "-h", bp::std_out > output, ios);
+    bp::child c(ExecutableFromWalkType(type), "-h", bp::std_out > output, ios);
 
     ios.run();
     // Apparently the -h flag also returns a failure code
@@ -187,6 +232,16 @@ void StackWalkRunner::CancelOperation(StackWalkOperation const* operation)
     }
 }
 // ------------------------------------ //
+const std::string& StackWalkRunner::ExecutableFromWalkType(StackWalkType type) const
+{
+    switch(type) {
+    case StackWalkType::Normal: return StackWalkExecutable;
+    case StackWalkType::MinGW: return MinGWStackWalkExecutable;
+    }
+
+    throw std::runtime_error("unhandled walk type");
+}
+// ------------------------------------ //
 void StackWalkRunner::RunStackWalkThread()
 {
     std::unique_lock<std::mutex> lock(Mutex);
@@ -212,11 +267,14 @@ void StackWalkRunner::RunStackWalkThread()
 
         operation->MarkStarted();
 
-        Wt::log("info") << "Beginning stack walk on file: " << operation->GetFilePath();
+        const auto walkType = operation->GetWalkType();
+
+        Wt::log("info") << "Beginning stack walk on file: " << operation->GetFilePath()
+                        << " with type: " << static_cast<int>(walkType);
 
         const auto start = std::chrono::high_resolution_clock::now();
 
-        bp::child c(StackWalkExecutable, operation->GetFilePath(), SymbolsFolder,
+        bp::child c(ExecutableFromWalkType(walkType), operation->GetFilePath(), SymbolsFolder,
             bp::std_out > output, bp::std_err > error, ChildProcessIoService);
 
         ChildProcessIoService.run();

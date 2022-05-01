@@ -14,7 +14,7 @@ class ResultWidget;
 
 class Application : public Wt::WApplication {
 public:
-    Application(const Wt::WEnvironment& env, const std::shared_ptr<StackWalkRunner>& runner);
+    Application(const Wt::WEnvironment& env, std::shared_ptr<StackWalkRunner>  runner);
 
     void finalize() override;
 

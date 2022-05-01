@@ -9,16 +9,19 @@
 #include <Wt/WLogger.h>
 
 #include <thread>
+#include <utility>
 
 using namespace sws;
 // ------------------------------------ //
-APIV1::APIV1(const std::shared_ptr<StackWalkRunner>& runner) : Runner(runner) {}
+APIV1::APIV1(std::shared_ptr<StackWalkRunner> runner) : Runner(std::move(runner)) {}
 // ------------------------------------ //
 void APIV1::handleRequest(const Wt::Http::Request& request, Wt::Http::Response& response)
 {
     response.setMimeType("text/plain");
 
     std::string result;
+
+    const auto* requestedWalker = request.getParameter("stackwalkType");
 
     if(request.uploadedFiles().size() != 1) {
 
@@ -27,12 +30,31 @@ void APIV1::handleRequest(const Wt::Http::Request& request, Wt::Http::Response& 
                  std::to_string(request.uploadedFiles().size());
     } else {
 
+        StackWalkType walkType = StackWalkType::Normal;
+
+        if(requestedWalker) {
+
+            if(*requestedWalker == "normal") {
+                walkType = StackWalkType::Normal;
+            } else if(*requestedWalker == "mingw") {
+                walkType = StackWalkType::MinGW;
+            } else {
+                response.setStatus(400);
+                result = "Unknown stackwalk type";
+                response.setContentLength(result.length());
+                response.out() << result;
+                return;
+            }
+
+            Wt::log("info") << "Requested walk type is: " << *requestedWalker;
+        }
+
         auto& file = request.uploadedFiles().begin()->second;
 
         Wt::log("info") << "API stackwalk on file: " << file.spoolFileName();
 
         try {
-            auto op = std::make_shared<StackWalkOperation>(file.spoolFileName());
+            auto op = std::make_shared<StackWalkOperation>(file.spoolFileName(), walkType);
 
             // We will delete the file ourselves
             file.stealSpoolFile();
@@ -48,17 +70,18 @@ void APIV1::handleRequest(const Wt::Http::Request& request, Wt::Http::Response& 
 
             result = op->GetResult();
 
-            if(!op->HasSucceeded()){
-                response.setStatus(500);                
+            if(!op->HasSucceeded()) {
+                response.setStatus(500);
+            } else {
+                response.setStatus(200);
             }
-            
+
         } catch(const std::exception& e) {
             response.setStatus(500);
             result = "Internal server error: " + std::string(e.what());
         }
     }
 
-    response.setStatus(200);
     response.setContentLength(result.length());
     response.out() << result;
 }

@@ -8,13 +8,18 @@ namespace sws {
 
 class StackWalkRunner;
 
+enum class StackWalkType {
+    Normal,
+    MinGW,
+};
+
 //! \brief
 class StackWalkOperation {
     friend StackWalkRunner;
 
 public:
     //! \exceptions std::runtime_error if file doesn't exist
-    StackWalkOperation(const std::string& file);
+    StackWalkOperation(const std::string& file, StackWalkType walkType);
     ~StackWalkOperation();
 
     StackWalkOperation(const StackWalkOperation& other) = delete;
@@ -51,7 +56,12 @@ public:
         return Success;
     }
 
-    const std::string GetResult() const
+    StackWalkType GetWalkType() const
+    {
+        return WalkType;
+    }
+
+    std::string GetResult() const
     {
         std::unique_lock<std::recursive_mutex> lock(Mutex);
 
@@ -94,6 +104,7 @@ private:
     std::string Result;
 
     const std::string FilePath;
+    const StackWalkType WalkType;
     bool FileDeleted = false;
 
     // Callbacks

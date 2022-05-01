@@ -7,7 +7,8 @@
 
 using namespace sws;
 // ------------------------------------ //
-StackWalkOperation::StackWalkOperation(const std::string& file) : FilePath(file)
+StackWalkOperation::StackWalkOperation(const std::string& file, StackWalkType type) :
+    WalkType(type), FilePath(file)
 {
     if(!boost::filesystem::exists(file))
         throw std::runtime_error("file provided to StackWalkOperation does not exist");

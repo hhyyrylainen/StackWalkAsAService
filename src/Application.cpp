@@ -7,6 +7,7 @@
 
 #include <Wt/WBootstrapTheme.h>
 #include <Wt/WBreak.h>
+#include <Wt/WComboBox.h>
 #include <Wt/WContainerWidget.h>
 #include <Wt/WEnvironment.h>
 #include <Wt/WPushButton.h>
@@ -14,9 +15,9 @@
 using namespace sws;
 // ------------------------------------ //
 Application::Application(
-    const Wt::WEnvironment& env, const std::shared_ptr<StackWalkRunner>& runner) :
+    const Wt::WEnvironment& env, std::shared_ptr<StackWalkRunner> runner) :
     Wt::WApplication(env),
-    Runner(runner)
+    Runner(std::move(runner))
 {
     setTitle("StackWalk as a Service");
     setTheme(std::make_shared<Wt::WBootstrapTheme>());
@@ -39,7 +40,8 @@ Application::Application(
         "symbol directory (" +
         Runner->GetSymbolsFolder() +
         ") before this service can be used. The used stackwalk executable is " +
-        Runner->GetExecutablePath() + "</p>"));
+        Runner->ExecutableFromWalkType(StackWalkType::Normal) + ". MinGW stackwalk is: " +
+        Runner->ExecutableFromWalkType(StackWalkType::MinGW) + "</p>"));
 
     root()->addWidget(std::make_unique<Wt::WBreak>());
 
@@ -58,11 +60,23 @@ Application::Application(
         ErrorText->setText("<h2>This site does not work correctly without JavaScript!</h2>");
     }
 
+    root()->addWidget(std::make_unique<Wt::WBreak>());
+
     root()->addWidget(std::make_unique<Wt::WText>(".dmp file to process: "));
 
     Upload = root()->addWidget(std::make_unique<Wt::WFileUpload>());
     Upload->setMultiple(true);
     Upload->setFileTextSize(40);
+
+    root()->addWidget(std::make_unique<Wt::WBreak>());
+
+    root()->addWidget(std::make_unique<Wt::WText>("Walk type to perform: "));
+
+    Wt::WComboBox* typeSelection = root()->addWidget(std::make_unique<Wt::WComboBox>());
+    typeSelection->addItem("Normal");
+    typeSelection->addItem("MinGW");
+
+    root()->addWidget(std::make_unique<Wt::WBreak>());
 
     Wt::WPushButton* submit =
         root()->addWidget(std::make_unique<Wt::WPushButton>("Upload Selected File"));
@@ -73,8 +87,11 @@ Application::Application(
     // Button enable when can upload something
     Upload->changed().connect([this, submit] { submit->setDisabled(!Upload->canUpload()); });
 
+    // If type is changed after upload, allow uploading again
+    typeSelection->changed().connect([this, submit] { submit->setDisabled(Upload->empty()); });
+
     // Successful upload callback
-    Upload->uploaded().connect([this, submit]() {
+    Upload->uploaded().connect([this, submit, typeSelection]() {
         if(Upload->uploadedFiles().empty()) {
             ErrorText->setText("No files uploaded");
             return;
@@ -88,9 +105,20 @@ Application::Application(
 
         for(auto& file : Upload->uploadedFiles()) {
 
-            Wt::log("info") << "Uploaded crashdump file is: " << file.spoolFileName();
+            StackWalkType walkType = StackWalkType::Normal;
 
-            auto op = std::make_shared<StackWalkOperation>(file.spoolFileName());
+            switch(typeSelection->currentIndex()) {
+            case 0:
+                // normal
+                break;
+            case 1: walkType = StackWalkType::MinGW; break;
+            default: Wt::log("error") << "Unknown stackwalk type index selected";
+            }
+
+            Wt::log("info") << "Uploaded crashdump file is: " << file.spoolFileName()
+                            << " selected walk type: " << static_cast<int>(walkType);
+
+            auto op = std::make_shared<StackWalkOperation>(file.spoolFileName(), walkType);
 
             // We will delete the file ourselves
             file.stealSpoolFile();

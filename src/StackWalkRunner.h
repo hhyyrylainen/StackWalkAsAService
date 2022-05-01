@@ -10,6 +10,8 @@
 
 namespace sws {
 
+enum class StackWalkType;
+
 class StackWalkOperation;
 
 class StackWalkRunner {
@@ -30,15 +32,12 @@ public:
     void CancelOperation(StackWalkOperation const* operation);
 
     //! \brief Immediately runs stackwalk with the '-h' flag and returns output
-    std::string RunStackWalkHelp() const;
+    std::string RunStackWalkHelp(StackWalkType type) const;
 
     void Start();
     void Stop();
 
-    const auto& GetExecutablePath() const
-    {
-        return StackWalkExecutable;
-    }
+    const std::string& ExecutableFromWalkType(StackWalkType type) const;
 
     const auto& GetSymbolsFolder() const
     {
@@ -48,8 +47,10 @@ public:
 private:
     void RunStackWalkThread();
 
+
 private:
     std::string StackWalkExecutable;
+    std::string MinGWStackWalkExecutable;
     std::string SymbolsFolder;
 
     std::atomic<bool> Run{false};
