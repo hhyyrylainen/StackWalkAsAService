@@ -3,7 +3,7 @@ jobs:
    build:
      working_directory: /stackwalk
      docker:
-       - image: hhyyrylainen/stackwalk-deps:v1
+       - image: hhyyrylainen/stackwalk-deps:v2
      steps:
        - checkout
        - restore_cache:
