@@ -110,6 +110,9 @@ You can then for example run the compiled program like this:
 ```sh
 build/src/stackwalkwebapp --docroot build/src/ --http-address 0.0.0.0 --http-port 9090 -c config/wt_config.xml
 ```
-        
+
+Note that you may need to specify a different symbol directory or create
+the folder `build/src/Symbols`.
+
 You can check the `Makefile` for example commands how to rebuild and
 run after minimal changes.
