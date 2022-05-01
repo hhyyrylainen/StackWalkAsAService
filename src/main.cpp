@@ -16,7 +16,7 @@ int main(int argc, char** argv)
         server.setServerConfiguration(argc, argv, WTHTTP_CONFIGURATION);
 
         sws::APIV1 API(runner);
-        
+
         server.addResource(&API, "/api/v1");
 
         server.addEntryPoint(
@@ -26,12 +26,12 @@ int main(int argc, char** argv)
 
         if(server.start()) {
             int signal = Wt::WServer::waitForShutdown();
-            
+
             std::cerr << "Shutdown (signal = " << signal << ")" << std::endl;
 
             // This cancels all running operations
             runner->Stop();
-            
+
             server.stop();
 
             if(signal == SIGHUP)
