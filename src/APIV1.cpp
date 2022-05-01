@@ -21,7 +21,10 @@ void APIV1::handleRequest(const Wt::Http::Request& request, Wt::Http::Response& 
 
     std::string result;
 
-    const auto* requestedWalker = request.getParameter("stackwalkType");
+    auto* requestedWalker = request.getParameter("stackwalkType");
+
+    if(!requestedWalker)
+        requestedWalker = request.getParameter("walkType");
 
     if(request.uploadedFiles().size() != 1) {
 
@@ -36,7 +39,7 @@ void APIV1::handleRequest(const Wt::Http::Request& request, Wt::Http::Response& 
 
             if(*requestedWalker == "normal") {
                 walkType = StackWalkType::Normal;
-            } else if(*requestedWalker == "mingw") {
+            } else if(*requestedWalker == "mingw" || *requestedWalker == "MinGW") {
                 walkType = StackWalkType::MinGW;
             } else {
                 response.setStatus(400);
