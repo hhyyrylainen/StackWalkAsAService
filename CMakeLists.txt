@@ -38,6 +38,7 @@ include_directories(build/ThirdParty/include)
 
 # Copy stackwalk to the build folder and also install it
 set(STACK_WALK_EXECUTABLE build/ThirdParty/bin/minidump_stackwalk)
+set(STACK_WALK_MINGW build/ThirdParty/breakpad_mingw/bin/minidump_stackwalk)
 
 # Wt libs (static linking is used on windows)
 if(UNIX)
@@ -56,6 +57,10 @@ set(WT_CONFIG_FILE config/wt_config.xml)
 file(COPY ${STACK_WALK_EXECUTABLE} DESTINATION "${CMAKE_BINARY_DIR}/src")
 install(PROGRAMS ${STACK_WALK_EXECUTABLE} DESTINATION ${CMAKE_INSTALL_BINDIR})
 
+# hack to rename while copying
+configure_file(${STACK_WALK_MINGW} "${CMAKE_BINARY_DIR}/src/minidump_stackwalk_mingw" COPYONLY)
+install(PROGRAMS ${STACK_WALK_MINGW} DESTINATION ${CMAKE_INSTALL_BINDIR}
+  RENAME minidump_stackwalk_mingw)
 
 file(COPY ${WT_RESOURCES_FOLDER} DESTINATION "${CMAKE_BINARY_DIR}/src")
 install(DIRECTORY ${WT_RESOURCES_FOLDER} DESTINATION
