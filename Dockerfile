@@ -23,7 +23,7 @@ RUN cd /StackWalk/build && make install
 FROM fedora:41
 
 RUN dnf install -y --setopt=deltarpm=false libjpeg zlib boost GraphicsMagick fcgi glew \
-    libharu zlib sqlite libpq pango libunwind openssl libpng && dnf clean all
+    libharu zlib sqlite libpq pango libunwind openssl libpng libglvnd-opengl && dnf clean all
 
 # Copy binaries and resources from the build image
 COPY --from=builder /usr/local/bin/stackwalkwebapp /usr/local/bin/minidump_stackwalk \
