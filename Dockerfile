@@ -1,4 +1,4 @@
-FROM hhyyrylainen/stackwalk-deps:v2 AS builder
+FROM hhyyrylainen/stackwalk-deps:v3 AS builder
 
 # Copy files to container
 RUN mkdir /StackWalk
@@ -20,7 +20,7 @@ RUN cd /StackWalk && ./setup.rb --no-packagemanager && rm -rf /StackWalk/ThirdPa
 
 RUN cd /StackWalk/build && make install
 
-FROM fedora:35
+FROM fedora:41
 
 RUN dnf install -y --setopt=deltarpm=false libjpeg zlib boost GraphicsMagick fcgi glew \
     libharu zlib sqlite libpq pango libunwind openssl libpng && dnf clean all
@@ -39,5 +39,6 @@ COPY --from=builder /usr/local/var/StackWalkAsAService/http \
 # WORKDIR /stackwalk/
 ENTRYPOINT ["/usr/local/bin/stackwalkwebapp", "--docroot", \
     "/usr/local/var/StackWalkAsAService/http", \
-    "-c", "/usr/local/etc/StackWalkAsAService/wt_config.xml", "--http-address", "0.0.0.0"]
+    "-c", "/usr/local/etc/StackWalkAsAService/wt_config.xml", "--http-address", "0.0.0.0", \
+    "--http-port", "8080"]
 
