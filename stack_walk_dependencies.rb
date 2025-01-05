@@ -14,13 +14,13 @@ THIRD_PARTY_INSTALL = File.join(ProjectDir, 'build', 'ThirdParty')
 )
 
 @breakpad_mingw = BreakpadMinGW.new(
-  version: 'cdb9214e3a81223c48a913fd18c05a8d48404620',
+  version: '1ab24bcc817ebe629bf77daa53529d02361cb1e9',
   installPath: File.join(THIRD_PARTY_INSTALL, 'breakpad_mingw'),
   noInstallSudo: true
 )
 
 @wt = Wt.new(
-  version: '4.7.1',
+  version: '4.11.1',
   installPath: THIRD_PARTY_INSTALL,
   noInstallSudo: true,
   noExamples: true,
